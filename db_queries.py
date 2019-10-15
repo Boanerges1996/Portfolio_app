@@ -34,6 +34,8 @@ def sign_up(username,email,password):
         return {
             "message":"Username or Email is already exist"
         }
+
+
 def verify_username(username):
     cursor = get_db().cursor()
     query = '''
