@@ -23,9 +23,32 @@ app.config["MYSQL_PASSWORD"] = "Boanergesrhobbie1996"
 app.config["MYSQL_DB"] = myKeys.MYSQL_DB
 
 
+def loggin_required(f):
+    @wraps(f)
+    def wrap(*args, **kwargs):
+        token = None
+        if 'myToken' in request.headers:
+            token = request.headers['myToken']
+            
+        if not token:
+            return jsonify({
+                "message":"login to access this route"
+            }),401
+        try:
+            decode_token = jwt.decode(token,app.config['SECRET_KEY'])
+            username = decode_token["user"]
+            verify_token = db_queries.verify_token(username)
+        except Exception as exc:
+            print(exc)
+            return jsonify({    
+                "user-token":"invalid"
+            }),401
+        return f(*args,**kwargs)      
+    return wrap 
 
 
 
+# User registration endpoint
 @app.route('/user_registration',methods=["POST"])
 def sign_up():
     username = request.json["username"]
@@ -41,6 +64,147 @@ def sign_in():
     password = request.json['password']
     api_data = jsonify(db_queries.sign_in(username,password))
     return api_data
+
+
+
+# Personal information Endpoints
+@app.route('/personal',methods=["POST","GET","DELETE","PUT"])
+@loggin_required
+def personal():
+    if request.method=="POST":
+        data = request.json
+        token = request.headers["myToken"]
+        decode_token = jwt.decode(token,app.config["SECRET_KEY"])
+        firstname = request.json["firstname"]
+        lastname = request.json["lastname"]
+        othername = request.json["othernames"]
+        age = request.json["age"]
+        sex = request.json["sex"]
+        marriage_status = request.json["status"]
+        date_of_birth = request.json["date_of_birth"]
+        username = decode_token["user"]
+        user_id = db_queries.get_user_id(username)
+        api_data = db_queries.personal_info(firstname,lastname,othername,age,sex,marriage_status,date_of_birth,user_id)
+        api_data = {**api_data, **data,"user_id":user_id}
+        return jsonify(api_data)
+    
+    elif request.method == "GET":
+        token = request.headers["myToken"]
+        decode_token = jwt.decode(token,app.config["SECRET_KEY"])
+        username = decode_token["user"]
+        api_data = db_queries.get_personal(username)
+        return jsonify(api_data)
+
+    elif request.method == "PUT":
+        token = request.headers["myToken"]
+        decode_token = jwt.decode(token,app.config["SECRET_KEY"])
+        username = decode_token["user"]
+
+        firstname = request.json["firstname"]
+        lastname = request.json["lastname"]
+        othername = request.json["othername"]
+        age = request.json["age"]
+        sex = request.json["sex"]
+        marriage_status = request.json["status"]
+        date_of_birth = request.json["date_of_birth"]
+
+        api_data = db_queries.personal_update(firstname,lastname,othername,age,sex,marriage_status,date_of_birth,username)
+        return jsonify(api_data)
+
+    elif request.method == "DELETE":
+        token = request.headers["myToken"]
+        decode_token = jwt.decode(token,app.config["SECRET_KEY"])
+        username = decode_token["user"]
+        api_data = db_queries.delete_personal(username)
+        return jsonify(api_data)
+
+
+@app.route('/occupation',methods=["POST","GET","DELETE","PUT"])
+@loggin_required
+def occupation():
+    if request.method == "POST":
+        token = request.headers["myToken"]
+        decode_token = jwt.decode(token,app.config["SECRET_KEY"])
+        username = decode_token["user"]
+
+        occ_name = request.json["occ_name"]
+        prev_occ = request.json["prev_occ"]
+        comp_name = request.json["comp_name"]
+        position = request.json["position"]
+
+        api_data = db_queries.register_occ(occ_name,prev_occ,comp_name,position,username)
+        return jsonify(api_data)
+
+    elif request.method == "GET":
+        token = request.headers["myToken"]
+        decode_token = jwt.decode(token,app.config["SECRET_KEY"])
+        username = decode_token["user"]
+        api_data = db_queries.get_occ(username)
+        return jsonify(api_data)
+
+    elif request.method == "PUT":
+        token = request.headers["myToken"]
+        decode_token = jwt.decode(token,app.config["SECRET_KEY"])
+        username = decode_token["user"]
+
+        occ_name = request.json["occ_name"]
+        prev_occ = request.json["prev_occ"]
+        comp_name = request.json["comp_name"]
+        position = request.json["position"]
+
+        api_data = db_queries.update_occ(occ_name,prev_occ,comp_name,position,username)
+        return jsonify(api_data)
+
+
+    elif request.method == "DELETE":
+        token = request.headers["myToken"]
+        decode_token = jwt.decode(token,app.config["SECRET_KEY"])
+        username = decode_token["user"]
+
+        api_data = db_queries.delete_occ(username)
+        return jsonify(api_data)
+
+
+@app.route('/address',methods=["POST","GET","PUT","DELETE"])
+def address():
+    if request.method == "POST":
+        token = request.headers["myToken"]
+        decode_token = jwt.decode(token,app.config["SECRET_KEY"])
+        username = decode_token["user"]
+
+        home_add = request.json["home_add"]
+        work_add = request.json["work_add"]
+        postal_add = request.json["postal_add"]
+        telephone = request.json["telephone"]
+
+        api_data = db_queries.reg_address(home_add,work_add,postal_add,telephone,username)
+        return jsonify(api_data)
+    elif request.method == "GET":
+        token = request.headers["myToken"]
+        decode_token = jwt.decode(token,app.config["SECRET_KEY"])
+        username = decode_token["user"]
+        api_data = db_queries.get_add(username)
+        return jsonify(api_data)
+
+    elif request.method=="PUT":
+        token = request.headers["myToken"]
+        decode_token = jwt.decode(token,app.config["SECRET_KEY"])
+        username = decode_token["user"]
+
+        home_add = request.json["home_add"]
+        work_add = request.json["work_add"]
+        postal_add = request.json["postal_add"]
+        telephone = request.json["telephone"]
+        api_data = db_queries.update_add(home_add,work_add,postal_add,telephone,username)
+        return jsonify(api_data)
+
+    elif request.method == "DELETE":
+        token = request.headers["myToken"]
+        decode_token = jwt.decode(token,app.config["SECRET_KEY"])
+        username = decode_token["user"]
+
+        api_data = db_queries.delete_add(username)
+        return jsonify(api_data)
 
 
 
