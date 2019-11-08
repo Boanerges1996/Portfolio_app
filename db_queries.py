@@ -26,13 +26,15 @@ def sign_up(username,email,password):
             "username":user_info[1],
             "email":user_info[2],
             "user_avatar":user_info[3],
-            "token" :myToken.decode("UTF-8")
+            "token" :myToken.decode("UTF-8"),
+            "login":True
         }
 
     except Exception as error:
         print(error)
         return {
-            "message":"Username or Email is already exist"
+            "message":"Username or Email is already exist",
+            "login":False
         }
 
 
@@ -76,11 +78,13 @@ def sign_in(username,password):
                 "username":data[1],
                 "email":data[2],
                 "user_avatar":data[3],
-                "token":mytoken.decode("UTF-8")
+                "token":mytoken.decode("UTF-8"),
+                "login":True
             }
         else:
             return {
-                "message":"Invalid password"
+                "message":"Invalid password",
+                "login":False
             }
     else:
         return {
@@ -101,6 +105,47 @@ def verify_token(decoded_token):
         return None
     else:
         return True
+
+
+
+def updatingAvatar(imageUrl,user_id):
+    cursor = get_db().cursor()
+    query = '''
+        UPDATE user_info SET user_avatar=%s WHERE user_id=%s
+    '''
+    try:
+        cursor.execute(query,(imageUrl,int(user_id),))
+        get_db().commit()
+        return {
+            "message":"Update successful"
+        }
+
+    except Exception as err:
+        print(err)
+        print("User id doesnt exist")
+        return {
+            "message":err,
+            "message":"User doesnt exist"
+        }
+
+def getImageUrl(user_id):
+    cursor = get_db().cursor()
+    query = '''
+        SELECT user_avatar FROM user_info WHERE user_id=%s
+    '''
+    try:
+        cursor.execute(query,(int(user_id),))
+        data = cursor.fetchall()[0]
+        return {
+            "user_avatar":data[0                                        ]
+        }
+
+
+    except Exception as err:
+        print(err)
+        return {
+            "message":"database connection issues"
+        }
 
 
 
@@ -155,12 +200,14 @@ def get_personal(username):
             "age":data[4],
             "sex":data[5],
             "marriage_status":data[6],
-            "date_of_birth":data[7]
+            "date_of_birth":data[7],
+            "exists":True
         }
     except Exception as err:
         print(err)
         return {
-            "message":"Dont have a personal account yet"
+            "message":"Dont have a personal account yet",
+            "exists":False
         }
 
 
@@ -243,7 +290,8 @@ def get_occ(username):
         data = cursor.fetchall()
         if data == tuple():
             return {
-                "message":"User hasn't registered any ocuupation yet"
+                "message":"User hasn't registered any ocuupation yet",
+                "exists":False
             }
         else:
             return {
@@ -252,14 +300,15 @@ def get_occ(username):
                 "prev_occ":data[0][2],
                 "comp_name":data[0][3],
                 "position":data[0][4],
-                "user_id":user_id
+                "exists":True
             }
 
     except Exception as err:
         print(err)
         return {
-            "message":"Connection Error"
-        }
+            "message":"Connection Error",
+            "exists":False
+        }   
 
 
 def update_occ(occ_name,prev_occ,comp_name,position,username):
@@ -342,12 +391,13 @@ def get_add(username):
             "work_add":data[2],
             "postal_add":data[3],
             "phone":data[4],
-            "user_id":user_id
+            "exists":True
         }
     except Exception as err:
         print(err)
         return {
-            "message":"DB connection errors"
+            "message":"DB connection errors",
+            "exists":False
         }
 
 

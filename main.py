@@ -67,6 +67,28 @@ def sign_in():
 
 
 
+
+@app.route('/images',methods=["PUT","GET"])
+@loggin_required
+def updateImage():
+    if request.method=="PUT":
+        token = request.headers["myToken"]
+        decode_token = jwt.decode(token,app.config["SECRET_KEY"])
+        imageUrl = request.json["URL"]
+        username = decode_token["user"]
+        user_id = db_queries.get_user_id(username)
+        data = db_queries.updatingAvatar(imageUrl,user_id)
+        return jsonify(data)
+    elif request.method=="GET":
+        token = request.headers["myToken"]
+        decode_token = jwt.decode(token,app.config["SECRET_KEY"])
+        username = decode_token["user"]
+        user_id = db_queries.get_user_id(username)
+        image = db_queries.getImageUrl(user_id)
+        return jsonify(image)
+    
+
+
 # Personal information Endpoints
 @app.route('/personal',methods=["POST","GET","DELETE","PUT"])
 @loggin_required
@@ -102,7 +124,7 @@ def personal():
 
         firstname = request.json["firstname"]
         lastname = request.json["lastname"]
-        othername = request.json["othername"]
+        othername = request.json["othernames"]
         age = request.json["age"]
         sex = request.json["sex"]
         marriage_status = request.json["status"]
@@ -207,6 +229,14 @@ def address():
         return jsonify(api_data)
 
 
+
+@app.after_request
+def _close_db(res):
+    res.headers.add('Access-Control-Allow-Origin','*')
+    res.headers.add('Access-Control-Allow-Methods','POST,GET,PUT,DELETE')
+    res.headers.add('Access-Control-Allow-Headers', '*')
+    close_db()
+    return res
 
 if __name__ == "__main__":
     app.run(debug=True)
