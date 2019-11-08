@@ -19,7 +19,7 @@ mysql = MySQL(app)
 myKeys = Configuration()
 app.config["MYSQL_HOST"] = myKeys.MYSQL_HOST
 app.config["MYSQL_USER"] = myKeys.MYSQL_USER
-app.config["MYSQL_PASSWORD"] = "Boanergesrhobbie1996"
+app.config["MYSQL_PASSWORD"] = myKeys.MYSQL_PASSWORD
 app.config["MYSQL_DB"] = myKeys.MYSQL_DB
 
 
